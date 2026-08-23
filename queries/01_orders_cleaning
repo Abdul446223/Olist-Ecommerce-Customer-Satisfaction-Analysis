@@ -1,0 +1,12 @@
+-- 01_orders_cleaning.sql
+-- Filters Orders to delivered status with a valid delivery date,
+-- and calculates delay_days (positive = late, negative = early).
+
+SELECT
+    order_id,
+    DATE_DIFF(order_delivered_customer_date, order_estimated_delivery_date, DAY) AS delay_days
+FROM
+    `OLIST_REVIEWS.Orders`
+WHERE
+    order_delivered_customer_date IS NOT NULL
+    AND order_status = 'delivered';
