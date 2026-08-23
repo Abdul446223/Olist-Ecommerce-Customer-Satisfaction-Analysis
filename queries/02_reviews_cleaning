@@ -1,0 +1,24 @@
+-- Two-pass deduplication of the Reviews table:
+--   Pass 1: same review_id linked to multiple order_ids (identical content) -> keep one
+--   Pass 2: same order_id with genuinely different reviews -> keep the most recent
+-- Result: exactly one review_score per order_id.
+
+WITH reviews_step1 AS (
+    SELECT
+        order_id,
+        review_id,
+        review_score,
+        review_creation_date
+    FROM
+        `OLIST_REVIEWS.Reviews`
+    QUALIFY
+        ROW_NUMBER() OVER (PARTITION BY review_id ORDER BY review_creation_date DESC) = 1
+)
+
+SELECT
+    order_id,
+    review_score
+FROM
+    reviews_step1
+QUALIFY
+    ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_creation_date DESC) = 1;
