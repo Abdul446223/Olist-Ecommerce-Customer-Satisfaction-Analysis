@@ -1,0 +1,40 @@
+
+WITH
+  cleaned_orders AS (
+    SELECT
+        order_id,
+        DATE_DIFF(order_delivered_customer_date, order_estimated_delivery_date, DAY) AS delay_days
+    FROM `OLIST_REVIEWS.Orders`
+    WHERE order_delivered_customer_date IS NOT NULL
+      AND order_status = 'delivered'
+  ),
+
+  reviews_step1 AS (
+    SELECT
+        order_id,
+        review_id,
+        review_score,
+        review_creation_date
+    FROM `OLIST_REVIEWS.Reviews`
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY review_id ORDER BY review_creation_date DESC) = 1
+  ),
+
+  cleaned_review AS (
+    SELECT
+        order_id,
+        review_score
+    FROM reviews_step1
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_creation_date DESC) = 1
+  )
+
+SELECT
+    O.delay_days,
+    COUNT(*) AS order_count,
+    ROUND(COUNT(*) / SUM(COUNT(*)) OVER () * 100, 2) AS order_percentage,
+    ROUND(AVG(review_score), 2) AS avg_review_score
+FROM cleaned_orders AS O
+INNER JOIN cleaned_review AS R
+    ON O.order_id = R.order_id
+WHERE O.delay_days BETWEEN 1 AND 7
+GROUP BY O.delay_days
+ORDER BY O.delay_days;
