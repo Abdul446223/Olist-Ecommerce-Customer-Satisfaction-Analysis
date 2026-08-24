@@ -1,7 +1,7 @@
 01. ORDERS TABLE -- CHECKS + CLEANING
 ----------------------------------------------------------------
 
--- Check: nulls in key columns
+-- Check: nulls in key columns 
 SELECT
     COUNT(*) AS total_rows,
     COUNTIF(order_id IS NULL) AS null_order_ids,
