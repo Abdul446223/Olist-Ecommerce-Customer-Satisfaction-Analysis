@@ -1,0 +1,34 @@
+-- Depends on Cleaned_Products_Table (05) and the deduplicated reviews
+-- output (02), restricted to single-category orders only.
+
+WITH order_category_counts AS (
+    SELECT
+        oi.order_id,
+        COUNT(DISTINCT p.product_category_name) AS category_count
+    FROM `OLIST_REVIEWS.order_items` oi
+    JOIN `OLIST_REVIEWS.Cleaned_Products_Table` p
+        ON oi.product_id = p.product_id
+    GROUP BY oi.order_id
+),
+
+unique_order_categories AS (
+    SELECT DISTINCT
+        oi.order_id,
+        p.product_category_name
+    FROM `OLIST_REVIEWS.order_items` oi
+    JOIN `OLIST_REVIEWS.Cleaned_Products_Table` p
+        ON oi.product_id = p.product_id
+)
+
+SELECT
+    uoc.product_category_name,
+    ROUND(AVG(r.review_score), 2) AS avg_review_score,
+    COUNT(r.review_score) AS total_reviews
+FROM unique_order_categories uoc
+JOIN order_category_counts occ
+    ON uoc.order_id = occ.order_id
+JOIN `OLIST_REVIEWS.Cleaned_Review_Table` r
+    ON uoc.order_id = r.order_id
+WHERE occ.category_count = 1
+GROUP BY uoc.product_category_name
+ORDER BY avg_review_score DESC;
