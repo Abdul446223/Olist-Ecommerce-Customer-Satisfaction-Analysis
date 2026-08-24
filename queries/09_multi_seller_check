@@ -1,0 +1,23 @@
+-- Checks + analysis for the seller-level guiding question.
+
+-- Check: nulls in order_items.seller_id (Sellers table itself not needed --
+-- no seller attributes are used, only the seller_id already in order_items)
+SELECT
+    COUNT(*) AS total_rows,
+    COUNTIF(seller_id IS NULL) AS null_seller_ids
+FROM `OLIST_REVIEWS.order_items`;
+
+-- Multi-seller order check: since a single order can only map to one
+-- review_score, check what % of orders contain products from more than
+-- one seller. Result: 1.29% -- excluded from the seller-level analysis,
+-- same reasoning as the multi-category check.
+WITH order_seller_counts AS (
+    SELECT
+        order_id,
+        COUNT(DISTINCT seller_id) AS seller_count
+    FROM `OLIST_REVIEWS.order_items`
+    GROUP BY order_id
+)
+SELECT
+    COUNT(CASE WHEN seller_count > 1 THEN 1 END) * 100.0 / COUNT(*) AS pct_multi_seller_orders
+FROM order_seller_counts;
