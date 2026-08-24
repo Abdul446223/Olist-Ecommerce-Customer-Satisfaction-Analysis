@@ -1,24 +1,49 @@
--- Two-pass deduplication of the Reviews table:
+02. REVIEWS TABLE -- CHECKS + CLEANING
+----------------------------------------------------------------
+
+-- Check: nulls in key columns
+SELECT
+    COUNT(*) AS total_rows,
+    COUNTIF(review_id IS NULL) AS null_review_id,
+    COUNTIF(order_id IS NULL) AS null_order_id,
+    COUNTIF(review_score IS NULL) AS null_review_score,
+    COUNTIF(review_comment_message IS NULL) AS null_comment_message
+FROM `OLIST_REVIEWS.Reviews`;
+
+-- Check: duplicate review_id / duplicate order_id counts
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT review_id) AS unique_review_ids,
+    COUNT(DISTINCT order_id) AS unique_order_ids
+FROM `OLIST_REVIEWS.Reviews`;
+
+-- Check: inspect one duplicated order_id to see if the rows are genuinely
+-- different reviews or exact copies
+SELECT *
+FROM `OLIST_REVIEWS.Reviews`
+WHERE order_id IN (
+    SELECT order_id
+    FROM `OLIST_REVIEWS.Reviews`
+    GROUP BY order_id
+    HAVING COUNT(*) > 1
+    LIMIT 1
+);
+
+-- Cleaning: two-pass deduplication
 --   Pass 1: same review_id linked to multiple order_ids (identical content) -> keep one
 --   Pass 2: same order_id with genuinely different reviews -> keep the most recent
 -- Result: exactly one review_score per order_id.
-
 WITH reviews_step1 AS (
     SELECT
         order_id,
         review_id,
         review_score,
         review_creation_date
-    FROM
-        `OLIST_REVIEWS.Reviews`
-    QUALIFY
-        ROW_NUMBER() OVER (PARTITION BY review_id ORDER BY review_creation_date DESC) = 1
+    FROM `OLIST_REVIEWS.Reviews`
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY review_id ORDER BY review_creation_date DESC) = 1
 )
-
 SELECT
     order_id,
     review_score
-FROM
-    reviews_step1
-QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_creation_date DESC) = 1;
+FROM reviews_step1
+QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_creation_date DESC) = 1;
