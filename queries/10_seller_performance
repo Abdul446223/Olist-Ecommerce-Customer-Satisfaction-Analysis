@@ -1,0 +1,64 @@
+-- Checks + final analysis for seller performance vs. review score.
+-- Depends on the deduplicated reviews output (02).
+
+-- Check: distribution of review counts per seller, to justify the
+-- reliability threshold before ranking sellers. Result: ~61% of sellers
+-- have 10 or fewer total reviews -- a clear long tail.
+SELECT
+    CASE
+        WHEN review_count = 1 THEN '1 review'
+        WHEN review_count BETWEEN 2 AND 5 THEN '2-5 reviews'
+        WHEN review_count BETWEEN 6 AND 10 THEN '6-10 reviews'
+        WHEN review_count BETWEEN 11 AND 20 THEN '11-20 reviews'
+        WHEN review_count BETWEEN 21 AND 50 THEN '21-50 reviews'
+        WHEN review_count BETWEEN 51 AND 100 THEN '51-100 reviews'
+        WHEN review_count BETWEEN 101 AND 200 THEN '101-200 reviews'
+        WHEN review_count BETWEEN 201 AND 300 THEN '201-300 reviews'
+        WHEN review_count BETWEEN 301 AND 400 THEN '301-400 reviews'
+        WHEN review_count BETWEEN 401 AND 500 THEN '401-500 reviews'
+        WHEN review_count BETWEEN 501 AND 1000 THEN '501-1000 reviews'
+        WHEN review_count BETWEEN 1001 AND 1500 THEN '1001-1500 reviews'
+        ELSE '1501-2000 reviews'
+    END AS review_bucket,
+    COUNT(*) AS seller_count
+FROM (
+    SELECT seller_id, COUNT(*) AS review_count
+    FROM `OLIST_REVIEWS.order_items`
+    GROUP BY seller_id
+) AS seller_counts
+GROUP BY review_bucket
+ORDER BY MIN(review_count);
+
+-- Cleaning + analysis: average review_score per seller, restricted to
+-- single-seller orders (order_seller_counts = 1) and sellers with more
+-- than 20 qualifying reviews. Result: reliable sellers range from 2.19
+-- to 5.0 avg review_score.
+WITH order_seller_counts AS (
+    SELECT
+        order_id,
+        COUNT(DISTINCT seller_id) AS seller_count
+    FROM `OLIST_REVIEWS.order_items`
+    GROUP BY order_id
+),
+
+seller_performance AS (
+    SELECT
+        OI.seller_id,
+        OI.order_id,
+        R.review_score
+    FROM `OLIST_REVIEWS.order_items` AS OI
+    INNER JOIN `OLIST_REVIEWS.Cleaned_Review_Table` AS R
+        ON OI.order_id = R.order_id
+    INNER JOIN order_seller_counts AS OSC
+        ON OI.order_id = OSC.order_id
+    WHERE OSC.seller_count = 1
+)
+
+SELECT
+    seller_id,
+    ROUND(AVG(review_score), 2) AS avg_review_score,
+    COUNT(*) AS total_reviews
+FROM seller_performance
+GROUP BY seller_id
+HAVING total_reviews > 20
+ORDER BY avg_review_score;
