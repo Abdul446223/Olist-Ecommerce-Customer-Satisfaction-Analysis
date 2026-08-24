@@ -1,0 +1,12 @@
+WITH order_category_counts AS (
+    SELECT
+        O.order_id,
+        COUNT(DISTINCT P.product_category_name) AS category_count
+    FROM `OLIST_REVIEWS.Products` AS P
+    INNER JOIN `OLIST_REVIEWS.order_items` AS O
+        ON P.product_id = O.product_id
+    GROUP BY O.order_id
+)
+SELECT
+    COUNT(CASE WHEN category_count > 1 THEN 1 END) * 100.0 / COUNT(*) AS pct_multi_category_orders
+FROM order_category_counts;
