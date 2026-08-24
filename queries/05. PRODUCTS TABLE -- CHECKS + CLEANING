@@ -1,0 +1,41 @@
+-- Check: nulls and duplicates
+SELECT
+    COUNT(*) AS total_rows,
+    COUNT(DISTINCT product_id) AS unique_product_ids,
+    COUNTIF(product_category_name IS NULL) AS null_category_names
+FROM `OLIST_REVIEWS.Products`;
+
+-- Check: near-duplicate categories -- counts + would need a price join
+-- to compare average pricing between the pair
+SELECT
+    product_category_name,
+    COUNT(*) AS product_count
+FROM `OLIST_REVIEWS.Products`
+WHERE product_category_name IN
+    ('eletrodomesticos', 'eletrodomesticos_2', 'casa_conforto', 'casa_conforto_2')
+GROUP BY product_category_name;
+
+-- Check: which category names have no match in the translation table
+SELECT DISTINCT
+    P.product_category_name
+FROM `OLIST_REVIEWS.Products` AS P
+LEFT JOIN `OLIST_REVIEWS.product_category_name_translation` AS T
+    ON P.product_category_name = T.string_field_0
+WHERE T.string_field_1 IS NULL
+  AND P.product_category_name IS NOT NULL;
+
+-- Cleaning: null category -> 'unknown', join English translation table,
+-- manually translate the 2 categories missing from that table
+CREATE TEMP TABLE Cleaned_Products_Table AS
+SELECT
+    P.product_id,
+    CASE
+        WHEN product_category_name = 'portateis_cozinha_e_preparadores_de_alimentos'
+            THEN 'portable_kitchen_and_food_preparators'
+        WHEN product_category_name = 'pc_gamer'
+            THEN 'gaming_pc'
+        ELSE COALESCE(T.string_field_1, 'unknown')
+    END AS product_category_name
+FROM `OLIST_REVIEWS.Products` AS P
+LEFT JOIN `OLIST_REVIEWS.product_category_name_translation` AS T
+    ON P.product_category_name = T.string_field_0;
