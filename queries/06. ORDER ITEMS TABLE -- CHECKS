@@ -1,0 +1,35 @@
+
+-- Check: nulls in the join keys
+SELECT
+    COUNT(*) AS total_rows,
+    COUNTIF(order_id IS NULL) AS null_order_ids,
+    COUNTIF(product_id IS NULL) AS null_product_ids
+FROM `OLIST_REVIEWS.order_items`;
+
+-- Check: exact duplicate order_id + product_id rows (quantity > 1 per product)
+SELECT
+    order_id,
+    product_id,
+    COUNT(*) AS row_count
+FROM `OLIST_REVIEWS.order_items`
+GROUP BY order_id, product_id
+HAVING COUNT(*) > 1;
+
+-- Check: orphan product_id (no match in Products)
+SELECT
+    COUNT(*) AS orphan_product_rows
+FROM `OLIST_REVIEWS.order_items` AS O
+LEFT JOIN `OLIST_REVIEWS.Products` AS P
+    ON O.product_id = P.product_id
+WHERE P.product_id IS NULL;
+
+-- Check: orphan order_id (no match in Orders)
+SELECT
+    COUNT(*) AS orphan_order_rows
+FROM `OLIST_REVIEWS.order_items` AS O
+LEFT JOIN `OLIST_REVIEWS.Orders` AS D
+    ON O.order_id = D.order_id
+WHERE D.order_id IS NULL;
+
+-- Result: 0 nulls, 0 orphans. The 10,990 duplicate rows are consistent with
+-- quantity > 1 of the same product within an order -- no cleaning needed.
