@@ -109,45 +109,6 @@ Given how small both shares are, these orders were excluded from their respectiv
 
 One new column, `delay_days`, was calculated as `delivered_customer_date − estimated_delivery_date` (positive = late, negative = early), then grouped into four buckets: Early, On Time, Late (1–7 days), Very Late (8+ days).
 
-### Cleaning Query
-
-```sql
-WITH
-  cleaned_orders AS (
-    SELECT
-        order_id,
-        DATE_DIFF(order_delivered_customer_date, order_estimated_delivery_date, DAY) AS delay_days
-    FROM `OLIST_REVIEWS.Orders`
-    WHERE order_delivered_customer_date IS NOT NULL
-      AND order_status = 'delivered'
-  ),
-  reviews_step1 AS (
-    SELECT order_id, review_id, review_score, review_creation_date
-    FROM `OLIST_REVIEWS.Reviews`
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY review_id ORDER BY review_creation_date DESC) = 1
-  ),
-  cleaned_review AS (
-    SELECT order_id, review_score
-    FROM reviews_step1
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY order_id ORDER BY review_creation_date DESC) = 1
-  )
-SELECT
-    CASE
-        WHEN delay_days < 0 THEN '1. Early'
-        WHEN delay_days = 0 THEN '2. On Time'
-        WHEN delay_days BETWEEN 1 AND 7 THEN '3. Late (1-7 days)'
-        ELSE '4. Very Late (8+ days)'
-    END AS delivery_bucket,
-    COUNT(*) AS order_count,
-    ROUND(AVG(review_score), 2) AS avg_review_score
-FROM cleaned_orders AS O
-INNER JOIN cleaned_review AS R ON O.order_id = R.order_id
-GROUP BY delivery_bucket
-ORDER BY delivery_bucket;
-```
-
-All 10 queries used in this project — including the products, order items, category, and seller cleaning and analysis — are available in the `queries/` folder.
-
 ### After Cleaning
 
 - **Rows removed:** 2,971 (Orders) and 1,089 (Reviews)
