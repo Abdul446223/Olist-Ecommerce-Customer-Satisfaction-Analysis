@@ -1,6 +1,6 @@
 # Olist E-Commerce Customer Satisfaction Analysis
 
-## Google Data Analytics Capstone Project — Case Study 2
+## A self-directed second portfolio project, following the Google Data Analytics methodology
 
 ---
 
@@ -306,4 +306,4 @@ Office furniture and men's fashion show below-average satisfaction with solid sa
 
 ---
 
-*This project was completed as part of the Google Data Analytics Professional Certificate capstone. See also: [Cyclistic Bike-Share Analysis](https://github.com/Abdul446223/Cyclistic-Bike-Share-Analysis) (Case Study 1).*
+*This project applies the Google Data Analytics methodology to a self-selected dataset, as a second portfolio piece following the Cyclistic capstone. See also: [Cyclistic Bike-Share Analysis](https://github.com/Abdul446223/Cyclistic-Bike-Share-Analysis) (Case Study 1).*
