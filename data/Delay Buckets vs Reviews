@@ -1,0 +1,5 @@
+delivery_bucket,order_count,avg_review_score
+1. Early,86271,4.3
+2. On Time,2719,4.1
+3. Late (1-7 days),3587,2.72
+4. Very Late (8+ days),2760,1.69
