@@ -207,6 +207,8 @@ Delivery performance is the dominant driver of customer satisfaction on Olist's 
 
 **[View Interactive Dashboard on Tableau Public](https://public.tableau.com/views/OlistCustomerSatisfactionAnalysis_17874788281550/OlistCustomerSatisfactionAnalysis?:language=en-US&:sid=&:redirect=auth&:display_count=n&:origin=viz_share_link)**
 
+<img width="1299" height="999" alt="Olist Customer Satisfaction Analysis" src="https://github.com/user-attachments/assets/dff47a64-8ab8-4ac0-bbcb-645ee56dbdff" />
+
 The dashboard brings together six views: delivery delay buckets, the daily delay trend, and top/bottom 5 charts for both categories and sellers, color-coded blue (reliable/good-performing) and red (concerning) throughout.
 
 ### Building the Dashboard
